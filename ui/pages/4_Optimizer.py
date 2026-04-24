@@ -122,7 +122,7 @@ if run_btn and strategy_path:
     col1, col2, col3 = st.columns(3)
     col1.metric("Mode", result.mode)
     col2.metric("Trials", result.n_trials)
-    col3.metric("Best Sharpe", f"{result.best_sharpe:.3f}" if result.best_sharpe else "N/A")
+    col3.metric("Best Sharpe", f"{result.best_sharpe:.3f}" if result.best_sharpe is not None else "N/A")
 
     if result.best_params:
         st.markdown("**Best parameters:**")
