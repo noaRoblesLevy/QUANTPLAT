@@ -1,0 +1,80 @@
+import json
+import pytest
+from db import init_db, get_session
+from db.models import BacktestRun
+from ui.data_loader import load_all_runs, load_report
+
+
+@pytest.fixture
+def engine_with_runs(tmp_path):
+    engine = init_db(f"sqlite:///{tmp_path}/test.db")
+    with get_session(engine) as session:
+        for i in range(3):
+            run = BacktestRun(
+                strategy_name=f"algo_{i}",
+                strategy_path=f"strategies/algo_{i}.py",
+                sharpe_ratio=float(i),
+                sortino_ratio=float(i),
+                max_drawdown=-0.1 * i,
+                profit_factor=1.0 + i * 0.1,
+                win_rate=0.4 + i * 0.05,
+                expectancy=100.0 * i,
+                annual_return=0.1 * i,
+                total_trades=10 * (i + 1),
+                results_path=f"results/run_{i}.json",
+            )
+            session.add(run)
+    return engine
+
+
+def test_load_all_runs_returns_list(engine_with_runs):
+    runs = load_all_runs(engine_with_runs)
+    assert isinstance(runs, list)
+    assert len(runs) == 3
+
+
+def test_load_all_runs_empty_db(tmp_path):
+    engine = init_db(f"sqlite:///{tmp_path}/empty.db")
+    runs = load_all_runs(engine)
+    assert runs == []
+
+
+def test_load_all_runs_returns_backtest_run_objects(engine_with_runs):
+    runs = load_all_runs(engine_with_runs)
+    assert all(isinstance(r, BacktestRun) for r in runs)
+
+
+def test_load_all_runs_fields_accessible(engine_with_runs):
+    runs = load_all_runs(engine_with_runs)
+    for run in runs:
+        assert run.strategy_name is not None
+        assert run.sharpe_ratio is not None
+        assert run.results_path is not None
+
+
+def test_load_report_returns_dict(tmp_path):
+    report = {"metrics": {"sharpe_ratio": 1.2}, "monte_carlo": {"percentiles": {}}}
+    report_path = tmp_path / "report.json"
+    report_path.write_text(json.dumps(report), encoding="utf-8")
+    result = load_report(str(report_path))
+    assert result is not None
+    assert result["metrics"]["sharpe_ratio"] == 1.2
+
+
+def test_load_report_returns_none_for_missing_file():
+    result = load_report("/nonexistent/path/report.json")
+    assert result is None
+
+
+def test_load_report_returns_full_structure(tmp_path):
+    report = {
+        "strategy_name": "my_algo",
+        "metrics": {"sharpe_ratio": 0.9, "max_drawdown": -0.12},
+        "monte_carlo": {"percentiles": {"p5": [1], "p50": [2], "p95": [3]}},
+        "pl_list": [100.0, -50.0],
+    }
+    path = tmp_path / "full_report.json"
+    path.write_text(json.dumps(report), encoding="utf-8")
+    result = load_report(str(path))
+    assert result["strategy_name"] == "my_algo"
+    assert "monte_carlo" in result
