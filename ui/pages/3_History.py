@@ -7,6 +7,10 @@ st.set_page_config(page_title="History — QUANTPLAT", layout="wide")
 st.title("📋 History")
 st.markdown("All past backtest runs, most recent first.")
 
+def _r(v, n=3):
+    return round(v, n) if v is not None else None
+
+
 runs = load_all_runs()
 
 if not runs:
@@ -15,17 +19,17 @@ if not runs:
 
 rows = [
     {
-        "Strategy":        r.strategy_name,
-        "Date":            r.created_at.strftime("%Y-%m-%d %H:%M"),
-        "Sharpe":          round(r.sharpe_ratio, 3),
-        "Sortino":         round(r.sortino_ratio, 3),
-        "Max DD (%)":      round(r.max_drawdown * 100, 2),
-        "Win Rate (%)":    round(r.win_rate * 100, 1),
-        "Profit Factor":   round(r.profit_factor, 3),
-        "Expectancy ($)":  round(r.expectancy, 2),
-        "Annual Return (%)": round(r.annual_return * 100, 2),
-        "Trades":          r.total_trades,
-        "Report Path":     r.results_path,
+        "Strategy":          r.strategy_name,
+        "Date":              r.created_at.strftime("%Y-%m-%d %H:%M"),
+        "Sharpe":            _r(r.sharpe_ratio),
+        "Sortino":           _r(r.sortino_ratio),
+        "Max DD (%)":        _r(r.max_drawdown * 100, 2) if r.max_drawdown is not None else None,
+        "Win Rate (%)":      _r(r.win_rate * 100, 1) if r.win_rate is not None else None,
+        "Profit Factor":     _r(r.profit_factor),
+        "Expectancy ($)":    _r(r.expectancy, 2),
+        "Annual Return (%)": _r(r.annual_return * 100, 2) if r.annual_return is not None else None,
+        "Trades":            r.total_trades,
+        "Report Path":       r.results_path,
     }
     for r in runs
 ]
