@@ -75,8 +75,8 @@ class GridSearchOptimizer:
         trial_num: int,
     ) -> dict:
         adapter = self._loader.load(strategy_path)
-        project_dir = adapter.prepare(strategy_path, parameters=params)
         try:
+            project_dir = adapter.prepare(strategy_path, parameters=params)
             lean_output = self._runner.run(project_dir)
             report = self._report_gen.generate(
                 strategy_path.stem, str(strategy_path), lean_output, n_mc=n_mc
