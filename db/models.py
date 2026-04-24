@@ -1,5 +1,5 @@
 from datetime import datetime
-from sqlalchemy import Column, Integer, String, Float, DateTime, ForeignKey
+from sqlalchemy import Column, Integer, String, Float, DateTime, ForeignKey, CheckConstraint
 from sqlalchemy.orm import DeclarativeBase
 
 
@@ -27,6 +27,9 @@ class BacktestRun(Base):
 
 class OptimizationRun(Base):
     __tablename__ = "optimization_runs"
+    __table_args__ = (
+        CheckConstraint("mode IN ('grid', 'walk_forward', 'ai')", name="ck_opt_run_mode"),
+    )
 
     id             = Column(Integer, primary_key=True, autoincrement=True)
     strategy_name  = Column(String, nullable=False)

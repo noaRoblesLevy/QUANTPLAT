@@ -121,7 +121,7 @@ def test_load_all_optimization_runs_fields(engine_with_opt_runs):
     runs = load_all_optimization_runs(engine_with_opt_runs)
     for run in runs:
         assert run.strategy_name is not None
-        assert run.mode in ("grid", "walk_forward", "ai")
+        assert run.mode == "grid"
 
 
 def test_load_optimization_trials_returns_trials(engine_with_opt_runs):

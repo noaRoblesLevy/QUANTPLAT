@@ -1,5 +1,6 @@
 import json
 import pytest
+from sqlalchemy import select
 from db import init_db, get_session
 from db.models import OptimizationRun, OptimizationTrial
 
@@ -88,6 +89,7 @@ def test_optimization_run_update_best(engine):
         run = session.get(OptimizationRun, run_id)
         run.best_sharpe = 1.5
         run.best_params = json.dumps({"sma_fast": 10, "sma_slow": 50})
+        session.add(run)  # explicit dirty-tracking
 
     with get_session(engine) as session:
         run = session.get(OptimizationRun, run_id)
@@ -96,7 +98,6 @@ def test_optimization_run_update_best(engine):
 
 
 def test_multiple_trials_per_run(engine):
-    from sqlalchemy import select
     with get_session(engine) as session:
         run = OptimizationRun(
             strategy_name="algo",

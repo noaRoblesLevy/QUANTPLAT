@@ -49,6 +49,6 @@ def load_optimization_trials(run_id: int, engine=None) -> List[OptimizationTrial
         return (
             session.query(OptimizationTrial)
             .filter(OptimizationTrial.run_id == run_id)
-            .order_by(OptimizationTrial.trial_number)
+            .order_by(OptimizationTrial.trial_number.asc())
             .all()
         )
