@@ -153,7 +153,7 @@ class WalkForwardOptimizer:
             session.add(OptimizationTrial(
                 run_id=run_id,
                 trial_number=trial_num,
-                params=json.dumps(params),
+                params=json.dumps({k: v for k, v in params.items() if not k.startswith("__wf_")}),
                 sharpe_ratio=metrics.get("sharpe_ratio"),
                 sortino_ratio=metrics.get("sortino_ratio"),
                 max_drawdown=metrics.get("max_drawdown"),
