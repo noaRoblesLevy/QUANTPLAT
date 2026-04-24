@@ -16,7 +16,7 @@ def init_db(database_url: str = _DEFAULT_URL):
 def get_session(engine=None):
     if engine is None:
         engine = init_db()
-    factory = sessionmaker(bind=engine)
+    factory = sessionmaker(bind=engine, expire_on_commit=False)
     session: Session = factory()
     try:
         yield session
