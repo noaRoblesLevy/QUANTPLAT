@@ -67,3 +67,31 @@ def test_trade_distribution_chart_handles_all_wins():
 def test_trade_distribution_chart_handles_all_losses():
     fig = trade_distribution_chart([-100.0, -200.0])
     assert isinstance(fig, go.Figure)
+
+
+from ui.chart_builder import optimizer_scatter_chart
+
+
+def test_optimizer_scatter_chart_returns_figure():
+    fig = optimizer_scatter_chart([5, 10, 20], [0.5, 1.2, 0.9])
+    assert isinstance(fig, go.Figure)
+
+
+def test_optimizer_scatter_chart_has_one_trace():
+    fig = optimizer_scatter_chart([5, 10, 20], [0.5, 1.2, 0.9])
+    assert len(fig.data) == 1
+
+
+def test_optimizer_scatter_chart_custom_labels():
+    fig = optimizer_scatter_chart(
+        [5, 10], [1.0, 1.5],
+        x_label="sma_fast",
+        title="SMA Fast vs Sharpe",
+    )
+    assert fig.layout.title.text == "SMA Fast vs Sharpe"
+    assert fig.layout.xaxis.title.text == "sma_fast"
+
+
+def test_optimizer_scatter_chart_handles_empty():
+    fig = optimizer_scatter_chart([], [])
+    assert isinstance(fig, go.Figure)

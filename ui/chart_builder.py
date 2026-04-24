@@ -90,3 +90,28 @@ def trade_distribution_chart(pl_list: List[float],
         height=350,
     )
     return fig
+
+
+def optimizer_scatter_chart(
+    param_values: List[float],
+    sharpe_values: List[float],
+    x_label: str = "Parameter",
+    title: str = "Parameter Optimization",
+) -> go.Figure:
+    colors = [_GREEN if s >= 0 else _RED for s in sharpe_values]
+    fig = go.Figure()
+    fig.add_trace(go.Scatter(
+        x=param_values,
+        y=sharpe_values,
+        mode="markers",
+        marker=dict(color=colors, size=8, opacity=0.7),
+        name="Trials",
+    ))
+    fig.update_layout(
+        title=title,
+        xaxis_title=x_label,
+        yaxis_title="Sharpe Ratio",
+        template=_THEME,
+        height=400,
+    )
+    return fig
