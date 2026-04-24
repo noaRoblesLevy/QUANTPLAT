@@ -3,7 +3,7 @@ from pathlib import Path
 from typing import List, Optional
 
 from db import get_session, init_db
-from db.models import BacktestRun
+from db.models import BacktestRun, OptimizationRun, OptimizationTrial
 
 _engine = None
 
@@ -31,3 +31,24 @@ def load_report(report_path: str) -> Optional[dict]:
     if not p.exists():
         return None
     return json.loads(p.read_text(encoding="utf-8"))
+
+
+def load_all_optimization_runs(engine=None) -> List[OptimizationRun]:
+    eng = engine or _get_engine()
+    with get_session(eng) as session:
+        return (
+            session.query(OptimizationRun)
+            .order_by(OptimizationRun.created_at.desc())
+            .all()
+        )
+
+
+def load_optimization_trials(run_id: int, engine=None) -> List[OptimizationTrial]:
+    eng = engine or _get_engine()
+    with get_session(eng) as session:
+        return (
+            session.query(OptimizationTrial)
+            .filter(OptimizationTrial.run_id == run_id)
+            .order_by(OptimizationTrial.trial_number)
+            .all()
+        )

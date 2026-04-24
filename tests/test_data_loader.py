@@ -1,8 +1,8 @@
 import json
 import pytest
 from db import init_db, get_session
-from db.models import BacktestRun
-from ui.data_loader import load_all_runs, load_report
+from db.models import BacktestRun, OptimizationRun, OptimizationTrial
+from ui.data_loader import load_all_runs, load_report, load_all_optimization_runs, load_optimization_trials
 
 
 @pytest.fixture
@@ -78,3 +78,60 @@ def test_load_report_returns_full_structure(tmp_path):
     result = load_report(str(path))
     assert result["strategy_name"] == "my_algo"
     assert "monte_carlo" in result
+
+
+@pytest.fixture
+def engine_with_opt_runs(tmp_path):
+    engine = init_db(f"sqlite:///{tmp_path}/opt.db")
+    with get_session(engine) as session:
+        for i in range(3):
+            run = OptimizationRun(
+                strategy_name=f"algo_{i}",
+                strategy_path=f"strategies/algo_{i}.py",
+                mode="grid",
+                n_trials=4,
+                best_sharpe=float(i),
+                best_params='{"sma_fast": 10}',
+            )
+            session.add(run)
+            session.flush()
+            for j in range(2):
+                session.add(OptimizationTrial(
+                    run_id=run.id,
+                    trial_number=j,
+                    params='{"sma_fast": 10}',
+                    sharpe_ratio=float(j),
+                ))
+    return engine
+
+
+def test_load_all_optimization_runs_returns_list(engine_with_opt_runs):
+    runs = load_all_optimization_runs(engine_with_opt_runs)
+    assert isinstance(runs, list)
+    assert len(runs) == 3
+
+
+def test_load_all_optimization_runs_empty(tmp_path):
+    engine = init_db(f"sqlite:///{tmp_path}/empty.db")
+    runs = load_all_optimization_runs(engine)
+    assert runs == []
+
+
+def test_load_all_optimization_runs_fields(engine_with_opt_runs):
+    runs = load_all_optimization_runs(engine_with_opt_runs)
+    for run in runs:
+        assert run.strategy_name is not None
+        assert run.mode in ("grid", "walk_forward", "ai")
+
+
+def test_load_optimization_trials_returns_trials(engine_with_opt_runs):
+    runs = load_all_optimization_runs(engine_with_opt_runs)
+    run_id = runs[0].id
+    trials = load_optimization_trials(run_id, engine_with_opt_runs)
+    assert isinstance(trials, list)
+    assert len(trials) == 2
+
+
+def test_load_optimization_trials_empty_for_unknown_run(engine_with_opt_runs):
+    trials = load_optimization_trials(99999, engine_with_opt_runs)
+    assert trials == []
