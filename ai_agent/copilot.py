@@ -22,7 +22,8 @@ class StrategyCopilot:
             "```",
         ]
         if metrics:
-            lines.append("\nBacktest metrics:")
+            lines.append("")
+            lines.append("Backtest metrics:")
             for key, val in metrics.items():
                 lines.append(f"  {key}: {val}")
         lines.extend([

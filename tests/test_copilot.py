@@ -42,6 +42,8 @@ def test_review_works_without_metrics(mock_llm):
     copilot = StrategyCopilot(llm=mock_llm)
     result = copilot.review("def algo(): return 42")
     assert result == "Add a 2% stop loss to each position."
+    prompt = mock_llm.call.call_args[0][0]
+    assert "Backtest metrics" not in prompt
 
 
 def test_review_prompt_mentions_trading_review(mock_llm):
