@@ -41,10 +41,11 @@ with tab_copilot:
 
         with st.spinner("Reviewing strategy..."):
             copilot = StrategyCopilot()
-            review = copilot.review(code, metrics=metrics)
+            st.session_state["last_review"] = copilot.review(code, metrics=metrics)
 
+    if "last_review" in st.session_state:
         st.subheader("Review")
-        st.markdown(review)
+        st.markdown(st.session_state["last_review"])
 
 with tab_history:
     st.subheader("Analysis History")
@@ -60,6 +61,7 @@ with tab_history:
     else:
         for run in runs_with_summary:
             date_str = run.created_at.strftime("%Y-%m-%d %H:%M")
-            with st.expander(f"{run.strategy_name} — {date_str} | Sharpe {run.sharpe_ratio:.2f}"):
+            sharpe_str = f"{run.sharpe_ratio:.2f}" if run.sharpe_ratio is not None else "N/A"
+            with st.expander(f"{run.strategy_name} — {date_str} | Sharpe {sharpe_str}"):
                 st.markdown(run.ai_summary)
                 st.caption(f"Results: `{run.results_path}`")
