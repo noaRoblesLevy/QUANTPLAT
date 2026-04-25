@@ -1,5 +1,8 @@
 from pathlib import Path
 from core.adapters.python_adapter import PythonAdapter
+from core.adapters.mt5_adapter import MT5Adapter
+from core.adapters.cpp_adapter import CppAdapter
+from core.adapters.rust_adapter import RustAdapter
 
 _LANGUAGE_MAP = {
     ".py":  "python",
@@ -24,8 +27,7 @@ class StrategyLoader:
         if language == "python":
             return PythonAdapter()
         if language == "mt5":
-            raise NotImplementedError("MT5 adapter not yet implemented")
+            return MT5Adapter()
         if language == "cpp":
-            raise NotImplementedError("C++ adapter not yet implemented")
-        if language == "rust":
-            raise NotImplementedError("Rust adapter not yet implemented")
+            return CppAdapter()
+        return RustAdapter()
