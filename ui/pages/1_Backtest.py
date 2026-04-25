@@ -70,20 +70,23 @@ if run_btn and strategy_path:
     equity = lean_output.get("equity_curve", [])
     pl_list = lean_output.get("pl_list", [])
 
+    report_path = report.get("report_path")
+
     # Run AI analyzer and write vault note
     ai_summary = None
     with st.spinner("Generating AI analysis..."):
         try:
             analyzer = PostBacktestAnalyzer()
             ai_summary = analyzer.analyze(metrics, pl_list=pl_list)
-            update_ai_summary(report["report_path"], ai_summary)
-            VaultWriter().write_backtest(
-                path.stem,
-                datetime.now(),
-                metrics,
-                ai_summary=ai_summary,
-                results_path=report["report_path"],
-            )
+            if report_path:
+                update_ai_summary(report_path, ai_summary)
+                VaultWriter().write_backtest(
+                    path.stem,
+                    datetime.now(),
+                    metrics,
+                    ai_summary=ai_summary,
+                    results_path=report_path,
+                )
         except Exception as e:
             st.warning(f"AI analysis failed: {e}")
 
@@ -103,7 +106,8 @@ if run_btn and strategy_path:
     with st.expander("Full Metrics"):
         st.json(metrics)
 
-    st.success(f"Report saved to `{report['report_path']}`")
+    if report_path:
+        st.success(f"Report saved to `{report_path}`")
 
     if ai_summary:
         st.subheader("🤖 AI Analysis")
