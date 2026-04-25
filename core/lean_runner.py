@@ -108,7 +108,7 @@ class LeanRunner:
             .get("Equity", {})
             .get("values", [])
         )
-        equity_curve = [pt["y"] for pt in equity_points] if equity_points else []
+        equity_curve = self._extract_equity_curve(equity_points)
         return {
             "pl_list": pl_list,
             "equity_curve": equity_curve,
@@ -116,3 +116,13 @@ class LeanRunner:
             "runtime_statistics": raw.get("runtimeStatistics", {}),
             "results_path": str(results_path),
         }
+
+    @staticmethod
+    def _extract_equity_curve(values: list) -> list:
+        if not values:
+            return []
+        # LEAN v2.5+: flat array [timestamp, open, high, low, close, timestamp, ...]
+        if isinstance(values[0], (int, float)):
+            return [values[i + 4] for i in range(0, len(values) - 4, 5)]
+        # Older LEAN format: list of {x: timestamp, y: value} dicts
+        return [pt["y"] for pt in values]
