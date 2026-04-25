@@ -64,4 +64,3 @@ def update_ai_summary(results_path: str, ai_summary: str, engine=None) -> None:
         )
         if run:
             run.ai_summary = ai_summary
-            session.add(run)

@@ -150,8 +150,9 @@ def test_update_ai_summary_sets_field(engine_with_runs):
 
 
 def test_update_ai_summary_no_op_for_unknown_path(engine_with_runs):
-    # Should not raise even if the path doesn't match any run
     update_ai_summary("/nonexistent/path.json", "summary", engine_with_runs)
+    runs = load_all_runs(engine_with_runs)
+    assert all(r.ai_summary is None for r in runs)
 
 
 def test_update_ai_summary_overwrites_previous(engine_with_runs):
