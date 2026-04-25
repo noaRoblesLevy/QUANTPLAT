@@ -59,9 +59,9 @@ def test_write_backtest_content_has_ai_summary(vault):
     assert "Strong momentum strategy" in content
 
 
-def test_write_backtest_updates_hub(vault, tmp_path):
+def test_write_backtest_updates_hub(vault):
     vault.write_backtest("algo", datetime(2026, 4, 25), _METRICS)
-    hub_content = (tmp_path / "00-Hub.md").read_text(encoding="utf-8")
+    hub_content = (vault._vault / "00-Hub.md").read_text(encoding="utf-8")
     assert "2026-04-25" in hub_content
     assert "algo" in hub_content
 
@@ -87,9 +87,9 @@ def test_write_optimization_content_has_sharpe(vault):
     assert "1.8" in content or "1.80" in content
 
 
-def test_write_optimization_updates_hub(vault, tmp_path):
+def test_write_optimization_updates_hub(vault):
     vault.write_optimization("algo", datetime(2026, 4, 25), "grid", best_sharpe=1.3, n_trials=4)
-    hub_content = (tmp_path / "00-Hub.md").read_text(encoding="utf-8")
+    hub_content = (vault._vault / "00-Hub.md").read_text(encoding="utf-8")
     assert "grid" in hub_content
     assert "algo" in hub_content
 
