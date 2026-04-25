@@ -33,7 +33,7 @@ class LeanRunner:
                 "-v", f"{self._data_dir.resolve()}:/Data:ro",
                 "-v", f"{project_dir}:/Algorithm",
                 "-v", f"{self._results_dir.resolve()}:/Results",
-                "-v", f"{config_path}:/Lean/Launcher/config.json:ro",
+                "-v", f"{config_path}:/Lean/Launcher/bin/Debug/config.json:ro",
                 LEAN_IMAGE,
             ]
             proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
@@ -51,7 +51,7 @@ class LeanRunner:
         finally:
             config_path.unlink(missing_ok=True)
 
-        results_file = self._find_results_file()
+        results_file = self._find_results_file(algo_name)
         raw = json.loads(results_file.read_text(encoding="utf-8"))
         return self._parse_lean_output(raw, results_path=results_file)
 
@@ -69,7 +69,7 @@ class LeanRunner:
             "algorithm-language": "Python",
             "algorithm-location": "/Algorithm/main.py",
             "data-folder": "/Data/",
-            "result-destination-folder": "/Results/",
+            "results-destination-folder": "/Results/",
             "debugging": False,
             "log-handler": "QuantConnect.Logging.CompositeLogHandler",
             "messaging-handler": "QuantConnect.Messaging.Messaging",
@@ -82,14 +82,21 @@ class LeanRunner:
             "show-missing-data-logs": False,
         }
 
-    def _find_results_file(self) -> Path:
+    def _find_results_file(self, algo_name: str) -> Path:
+        # LEAN writes {AlgoName}.json to the results folder
+        direct = self._results_dir / f"{algo_name}.json"
+        if direct.exists():
+            return direct
+        # Fallback: pick most recently modified JSON that looks like results
         candidates = sorted(
-            self._results_dir.glob("**/backtestResults.json"),
+            [p for p in self._results_dir.glob("*.json")
+             if "order-events" not in p.name and "summary" not in p.name
+             and "monitor" not in p.name and "requests" not in p.name],
             key=lambda p: p.stat().st_mtime,
             reverse=True,
         )
         if not candidates:
-            raise LeanRunError("No backtestResults.json found in results directory")
+            raise LeanRunError("No results JSON found in results directory")
         return candidates[0]
 
     def _parse_lean_output(self, raw: Dict, results_path: Path) -> Dict[str, Any]:

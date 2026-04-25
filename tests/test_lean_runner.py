@@ -113,7 +113,7 @@ def test_build_lean_config_contains_required_keys():
     assert config["algorithm-language"] == "Python"
     assert config["environment"] == "backtesting"
     assert config["data-folder"] == "/Data/"
-    assert config["result-destination-folder"] == "/Results/"
+    assert config["results-destination-folder"] == "/Results/"
 
 
 def test_parse_lean_output_extracts_pl_list(sample_lean_output):
