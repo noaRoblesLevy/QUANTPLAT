@@ -1,0 +1,28 @@
+# Environment & secrets
+.env
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.egg-info/
+dist/
+build/
+
+# LEAN outputs
+results/
+backtests/
+
+# Data (large binary files downloaded at runtime)
+data/equity/usa/daily/
+
+# Test & tooling
+.pytest_cache/
+.coverage
+htmlcov/
+*.stackdump
+
+# Misc
+test_output.txt

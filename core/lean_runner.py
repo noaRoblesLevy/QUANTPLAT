@@ -1,7 +1,10 @@
 import json
+import re
 import subprocess
 from pathlib import Path
 from typing import Callable, Dict, Any, Optional
+
+LEAN_IMAGE = "quantconnect/lean:latest"
 
 
 class LeanRunError(Exception):
@@ -9,43 +12,85 @@ class LeanRunError(Exception):
 
 
 class LeanRunner:
-    def __init__(self, lean_workspace: Optional[Path] = None):
-        self._workspace = Path(lean_workspace) if lean_workspace else Path.cwd()
+    def __init__(self, data_dir: Optional[Path] = None, results_dir: Optional[Path] = None):
+        root = Path(__file__).parent.parent
+        self._data_dir = Path(data_dir) if data_dir else root / "data"
+        self._results_dir = Path(results_dir) if results_dir else root / "results"
+        self._results_dir.mkdir(parents=True, exist_ok=True)
 
     def run(self, project_dir: Path,
             on_output: Optional[Callable[[str], None]] = None) -> Dict[str, Any]:
-        project_dir = Path(project_dir)
-        cmd = ["lean", "backtest", str(project_dir)]
-        proc = subprocess.Popen(
-            cmd,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.STDOUT,
-            cwd=str(self._workspace),
+        project_dir = Path(project_dir).resolve()
+        algo_name = self._detect_algorithm_name(project_dir / "main.py")
+
+        config_path = project_dir / "_lean_config.json"
+        config_path.write_text(
+            json.dumps(self._build_lean_config(algo_name), indent=2), encoding="utf-8"
         )
-        output_lines = []
-        for raw_line in proc.stdout:
-            line = raw_line.decode("utf-8", errors="replace")
-            output_lines.append(line)
-            if on_output:
-                on_output(line)
-        proc.wait()
-        if proc.returncode != 0:
-            raise LeanRunError(
-                f"LEAN exited with code {proc.returncode}.\n" + "".join(output_lines)
-            )
+        try:
+            cmd = [
+                "docker", "run", "--rm",
+                "-v", f"{self._data_dir.resolve()}:/Data:ro",
+                "-v", f"{project_dir}:/Algorithm",
+                "-v", f"{self._results_dir.resolve()}:/Results",
+                "-v", f"{config_path}:/Lean/Launcher/config.json:ro",
+                LEAN_IMAGE,
+            ]
+            proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+            output_lines = []
+            for raw_line in proc.stdout:
+                line = raw_line.decode("utf-8", errors="replace")
+                output_lines.append(line)
+                if on_output:
+                    on_output(line)
+            proc.wait()
+            if proc.returncode != 0:
+                raise LeanRunError(
+                    f"LEAN exited with code {proc.returncode}.\n" + "".join(output_lines)
+                )
+        finally:
+            config_path.unlink(missing_ok=True)
+
         results_file = self._find_results_file()
         raw = json.loads(results_file.read_text(encoding="utf-8"))
         return self._parse_lean_output(raw, results_path=results_file)
 
+    def _detect_algorithm_name(self, main_py: Path) -> str:
+        source = main_py.read_text(encoding="utf-8")
+        match = re.search(r"class\s+(\w+)\s*\(", source)
+        if match:
+            return match.group(1)
+        return main_py.parent.name
+
+    def _build_lean_config(self, algo_name: str) -> dict:
+        return {
+            "environment": "backtesting",
+            "algorithm-type-name": algo_name,
+            "algorithm-language": "Python",
+            "algorithm-location": "/Algorithm/main.py",
+            "data-folder": "/Data/",
+            "result-destination-folder": "/Results/",
+            "debugging": False,
+            "log-handler": "QuantConnect.Logging.CompositeLogHandler",
+            "messaging-handler": "QuantConnect.Messaging.Messaging",
+            "job-queue-handler": "QuantConnect.Queues.JobQueue",
+            "api-handler": "QuantConnect.Api.Api",
+            "map-file-provider": "QuantConnect.Data.Auxiliary.LocalDiskMapFileProvider",
+            "factor-file-provider": "QuantConnect.Data.Auxiliary.LocalDiskFactorFileProvider",
+            "data-provider": "QuantConnect.Lean.Engine.DataFeeds.DefaultDataProvider",
+            "object-store": "QuantConnect.Lean.Engine.Storage.LocalObjectStore",
+            "show-missing-data-logs": False,
+        }
+
     def _find_results_file(self) -> Path:
-        backtest_dirs = sorted(
-            (self._workspace / "backtests").glob("*/backtestResults.json"),
+        candidates = sorted(
+            self._results_dir.glob("**/backtestResults.json"),
             key=lambda p: p.stat().st_mtime,
             reverse=True,
         )
-        if not backtest_dirs:
-            raise LeanRunError("No backtestResults.json found in workspace/backtests/")
-        return backtest_dirs[0]
+        if not candidates:
+            raise LeanRunError("No backtestResults.json found in results directory")
+        return candidates[0]
 
     def _parse_lean_output(self, raw: Dict, results_path: Path) -> Dict[str, Any]:
         pl_list = list(raw.get("profitLoss", {}).values())
