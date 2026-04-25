@@ -35,7 +35,7 @@ def test_analyze_prompt_contains_pl_stats_when_provided(mock_llm):
     analyzer = PostBacktestAnalyzer(llm=mock_llm)
     analyzer.analyze({"sharpe_ratio": 1.0}, pl_list=[100.0, -50.0, 200.0, -80.0])
     prompt = mock_llm.call.call_args[0][0]
-    assert "4" in prompt  # total trades
+    assert "Total trades: 4" in prompt
 
 
 def test_analyze_works_without_pl_list(mock_llm):
