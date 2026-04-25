@@ -121,8 +121,12 @@ class LeanRunner:
     def _extract_equity_curve(values: list) -> list:
         if not values:
             return []
-        # LEAN v2.5+: flat array [timestamp, open, high, low, close, timestamp, ...]
-        if isinstance(values[0], (int, float)):
+        first = values[0]
+        # LEAN v2.5+: list of [timestamp, open, high, low, close] sub-lists
+        if isinstance(first, list):
+            return [pt[4] for pt in values if len(pt) >= 5]
+        # LEAN v2.5+ flat array: [timestamp, open, high, low, close, timestamp, ...]
+        if isinstance(first, (int, float)):
             return [values[i + 4] for i in range(0, len(values) - 4, 5)]
         # Older LEAN format: list of {x: timestamp, y: value} dicts
         return [pt["y"] for pt in values]
