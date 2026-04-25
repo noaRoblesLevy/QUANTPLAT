@@ -11,7 +11,11 @@ class MT5Adapter:
     def prepare(self, strategy_path: Path, parameters: Optional[Dict[str, Any]] = None) -> Path:
         strategy_path = Path(strategy_path)
         self._project_dir = Path(tempfile.mkdtemp(prefix="quantplat_mt5_"))
-        shutil.copy2(strategy_path, self._project_dir / "main.mq5")
+        try:
+            shutil.copy2(strategy_path, self._project_dir / "main.mq5")
+        except Exception:
+            self.cleanup()
+            raise
         return self._project_dir
 
     def run(self, project_dir: Path, on_output=None) -> dict:

@@ -105,12 +105,11 @@ def test_mt5_adapter_run_raises_not_implemented(mq5_file):
 
 
 def test_cpp_adapter_run_raises_on_missing_compiler(cpp_file, monkeypatch):
-    import subprocess
     from core.lean_runner import LeanRunError
     adapter = CppAdapter()
     project_dir = adapter.prepare(cpp_file)
     monkeypatch.setattr(
-        "subprocess.run",
+        "core.adapters.cpp_adapter.subprocess.run",
         lambda *a, **kw: (_ for _ in ()).throw(FileNotFoundError("g++ not found")),
     )
     with pytest.raises((FileNotFoundError, LeanRunError)):
@@ -123,7 +122,7 @@ def test_rust_adapter_run_raises_on_missing_compiler(rs_file, monkeypatch):
     adapter = RustAdapter()
     project_dir = adapter.prepare(rs_file)
     monkeypatch.setattr(
-        "subprocess.run",
+        "core.adapters.rust_adapter.subprocess.run",
         lambda *a, **kw: (_ for _ in ()).throw(FileNotFoundError("rustc not found")),
     )
     with pytest.raises((FileNotFoundError, LeanRunError)):

@@ -17,6 +17,8 @@ class StrategyLoader:
         strategy_path = Path(strategy_path)
         if not strategy_path.exists():
             raise FileNotFoundError(f"Strategy file not found: {strategy_path}")
+        if not strategy_path.is_file():
+            raise ValueError(f"Strategy path is not a file: {strategy_path}")
         ext = strategy_path.suffix.lower()
         language = _LANGUAGE_MAP.get(ext)
         if language is None:
