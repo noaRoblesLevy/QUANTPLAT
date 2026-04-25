@@ -135,3 +135,30 @@ def test_load_optimization_trials_returns_trials(engine_with_opt_runs):
 def test_load_optimization_trials_empty_for_unknown_run(engine_with_opt_runs):
     trials = load_optimization_trials(99999, engine_with_opt_runs)
     assert trials == []
+
+
+from ui.data_loader import update_ai_summary
+
+
+def test_update_ai_summary_sets_field(engine_with_runs):
+    runs = load_all_runs(engine_with_runs)
+    target = runs[0]
+    update_ai_summary(target.results_path, "Great Sharpe, consider reducing drawdown.", engine_with_runs)
+    updated = load_all_runs(engine_with_runs)
+    match = next(r for r in updated if r.results_path == target.results_path)
+    assert match.ai_summary == "Great Sharpe, consider reducing drawdown."
+
+
+def test_update_ai_summary_no_op_for_unknown_path(engine_with_runs):
+    # Should not raise even if the path doesn't match any run
+    update_ai_summary("/nonexistent/path.json", "summary", engine_with_runs)
+
+
+def test_update_ai_summary_overwrites_previous(engine_with_runs):
+    runs = load_all_runs(engine_with_runs)
+    path = runs[0].results_path
+    update_ai_summary(path, "First summary", engine_with_runs)
+    update_ai_summary(path, "Updated summary", engine_with_runs)
+    updated = load_all_runs(engine_with_runs)
+    match = next(r for r in updated if r.results_path == path)
+    assert match.ai_summary == "Updated summary"

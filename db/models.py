@@ -1,5 +1,5 @@
 from datetime import datetime
-from sqlalchemy import Column, Integer, String, Float, DateTime, ForeignKey, CheckConstraint
+from sqlalchemy import Column, Integer, String, Float, DateTime, ForeignKey, CheckConstraint, Text
 from sqlalchemy.orm import DeclarativeBase
 
 
@@ -22,6 +22,7 @@ class BacktestRun(Base):
     annual_return  = Column(Float, nullable=False)
     total_trades   = Column(Integer, nullable=False)
     results_path   = Column(String, nullable=False)
+    ai_summary     = Column(Text, nullable=True)
     created_at     = Column(DateTime, default=datetime.utcnow, nullable=False)
 
 

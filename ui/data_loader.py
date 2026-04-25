@@ -52,3 +52,16 @@ def load_optimization_trials(run_id: int, engine=None) -> List[OptimizationTrial
             .order_by(OptimizationTrial.trial_number.asc())
             .all()
         )
+
+
+def update_ai_summary(results_path: str, ai_summary: str, engine=None) -> None:
+    eng = engine or _get_engine()
+    with get_session(eng) as session:
+        run = (
+            session.query(BacktestRun)
+            .filter(BacktestRun.results_path == results_path)
+            .first()
+        )
+        if run:
+            run.ai_summary = ai_summary
+            session.add(run)
