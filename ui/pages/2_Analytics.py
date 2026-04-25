@@ -1,3 +1,4 @@
+import ui.bootstrap  # noqa: F401 — adds project root to sys.path
 import streamlit as st
 
 from ui.data_loader import load_all_runs, load_report

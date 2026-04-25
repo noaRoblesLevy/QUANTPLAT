@@ -1,3 +1,4 @@
+import ui.bootstrap  # noqa: F401 — adds project root to sys.path
 import streamlit as st
 from pathlib import Path
 from datetime import datetime

@@ -1,7 +1,15 @@
+import sys
+from pathlib import Path
 import streamlit as st
 from dotenv import load_dotenv
 
-load_dotenv()
+# Ensure the project root is on sys.path so all modules are importable
+# regardless of the working directory Streamlit was launched from.
+_root = Path(__file__).parent.parent
+if str(_root) not in sys.path:
+    sys.path.insert(0, str(_root))
+
+load_dotenv(_root / ".env")
 
 st.set_page_config(
     page_title="QUANTPLAT",

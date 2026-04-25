@@ -1,3 +1,4 @@
+import ui.bootstrap  # noqa: F401 — adds project root to sys.path
 import json
 import streamlit as st
 import pandas as pd
